@@ -503,7 +503,7 @@
         amount: num(refs.amount),
         rate: num(refs.rate),
         time: num(refs.time),
-        compoundings: parseFloat(refs.compoundings.value)
+        compoundings: refs.compoundings ? parseFloat(refs.compoundings.value) : NaN
       };
     }
 
@@ -517,6 +517,7 @@
         rate: ['principal', 'interest', 'time']
       };
       const required = requiredMap[modeKey];
+      if (!required) return 'Invalid calculation mode.';
       for (const key of required) {
         if (!Number.isFinite(values[key])) return `Please enter a valid ${key}.`;
         if (key !== 'rate' && values[key] <= 0) return `${key} must be greater than 0.`;
@@ -526,6 +527,7 @@
     }
 
     function renderModes() {
+      if (!refs.modeButtons) return;
       refs.modeButtons.innerHTML = '';
       Object.entries(modes).forEach(([key, config]) => {
         const btn = document.createElement('button');
@@ -536,7 +538,7 @@
           currentMode = key;
           renderModes();
           refreshMeta();
-          refs.notice.textContent = '';
+          if (refs.notice) refs.notice.textContent = '';
         });
         refs.modeButtons.appendChild(btn);
       });
@@ -594,8 +596,8 @@
     }
 
     function resetAll() {
-      document.querySelectorAll('input').forEach(input => input.value = '');
-      refs.compoundings.value = '12';
+      Array.from(document.querySelectorAll('input')).forEach(input => input.value = '');
+      if (refs.compoundings) refs.compoundings.value = '12';
       refs.mainResult.textContent = '—';
       refs.subResult.textContent = 'Fill the required values and press Calculate.';
       refs.quickOutputs.textContent = 'SI, CI, amount, rate, time, and ROI will appear here when enough data is available.';
