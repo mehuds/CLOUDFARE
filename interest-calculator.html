@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interest Calculator</title>
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text-xs: clamp(0.75rem, 0.72rem + 0.2vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.84rem + 0.25vw, 1rem);
+      --text-base: clamp(1rem, 0.96rem + 0.3vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.65vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --radius-md: 0.8rem;
+      --radius-lg: 1rem;
+      --radius-xl: 1.25rem;
+      --color-bg: #f7f6f2;
+      --color-surface: #fbfbf9;
+      --color-surface-2: #f1efea;
+      --color-border: #d9d4cc;
+      --color-text: #28251d;
+      --color-text-muted: #6f6b63;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-accent: #e9f4f3;
+      --color-error: #a13544;
+      --shadow-lg: 0 20px 55px rgba(26, 28, 26, 0.12);
+      --font-body: 'Satoshi', system-ui, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #161513;
+      --color-surface: #1c1b18;
+      --color-surface-2: #252320;
+      --color-border: #3c3935;
+      --color-text: #f1eeea;
+      --color-text-muted: #b9b3ac;
+      --color-primary: #4f98a3;
+      --color-primary-hover: #79bdc6;
+      --color-accent: #203234;
+      --color-error: #dd6974;
+      --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background:
+        radial-gradient(circle at top left, rgba(1, 105, 111, 0.1), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(1, 105, 111, 0.08), transparent 24%),
+        var(--color-bg);
+      padding: var(--space-6);
+    }
+
+    .page {
+      width: min(100%, 1120px);
+      margin: 0 auto;
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .hero,
+    .panel,
+    .results {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero {
+      padding: var(--space-8);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-6);
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      gap: var(--space-4);
+      align-items: center;
+    }
+
+    .logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      color: var(--color-primary);
+      flex: 0 0 auto;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: var(--text-xl); line-height: 1.1; margin-bottom: var(--space-2); }
+    .subtext { color: var(--color-text-muted); max-width: 60ch; }
+
+    .theme-toggle {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      cursor: pointer;
+      color: var(--color-text);
+      font-size: 1rem;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: var(--space-6);
+    }
+
+    .panel,
+    .results { padding: var(--space-6); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .field,
+    .full {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    label {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+      font: inherit;
+      min-height: 48px;
+    }
+
+    .actions {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+      margin-top: var(--space-4);
+    }
+
+    button.action {
+      min-height: 48px;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      padding: 0.85rem 1.1rem;
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.action.primary {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+
+    button.action.primary:hover,
+    button.action.primary:focus-visible { background: var(--color-primary-hover); }
+
+    .switches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
+
+    .mode-btn {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border-radius: 999px;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+    }
+
+    .mode-btn.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: white;
+    }
+
+    .result-card {
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-bottom: var(--space-4);
+    }
+
+    .result-card:last-child { margin-bottom: 0; }
+    .result-card h3 {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .result-value {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .formula {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-top: var(--space-2);
+      line-height: 1.5;
+    }
+
+    .notice {
+      margin-top: var(--space-4);
+      color: var(--color-error);
+      font-size: var(--text-sm);
+      min-height: 24px;
+    }
+
+    .tip {
+      background: var(--color-accent);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-top: var(--space-5);
+      line-height: 1.6;
+      color: var(--color-text-muted);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 860px) {
+      .content { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: var(--space-4); }
+      .hero, .panel, .results { padding: var(--space-5); }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20h16"></path>
+            <path d="M6 16l3-8 3 5 2-3 4 6"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Interest Calculator</h1>
+          <p class="subtext">Calculate simple interest, compound interest, amount, time, rate of interest, and ROI from one clean calculator.</p>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </section>
+
+    <section class="content">
+      <section class="panel">
+        <div class="switches" id="modeButtons"></div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="principal">Principal / Investment</label>
+            <input id="principal" type="number" min="0" step="0.01" placeholder="e.g. 10000" />
+          </div>
+
+          <div class="field">
+            <label for="interest">Interest Earned</label>
+            <input id="interest" type="number" min="0" step="0.01" placeholder="e.g. 1200" />
+          </div>
+
+          <div class="field">
+            <label for="amount">Amount / Final Value</label>
+            <input id="amount" type="number" min="0" step="0.01" placeholder="e.g. 11200" />
+          </div>
+
+          <div class="field">
+            <label for="rate">Rate of Interest (%)</label>
+            <input id="rate" type="number" step="0.01" placeholder="e.g. 12" />
+          </div>
+
+          <div class="field">
+            <label for="time">Time (years)</label>
+            <input id="time" type="number" step="0.01" placeholder="e.g. 2" />
+          </div>
+
+          <div class="field" id="compoundWrap">
+            <label for="compoundings">Compounding / year</label>
+            <select id="compoundings">
+              <option value="1">Yearly (1)</option>
+              <option value="2">Half-yearly (2)</option>
+              <option value="4">Quarterly (4)</option>
+              <option value="12" selected>Monthly (12)</option>
+              <option value="365">Daily (365)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="action primary" id="calculateBtn">Calculate</button>
+          <button class="action" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="notice" id="notice"></div>
+
+        <div class="tip" id="tipBox"></div>
+      </section>
+
+      <aside class="results">
+        <div class="result-card">
+          <h3>Selected mode</h3>
+          <div class="result-value" id="modeLabel">Simple Interest</div>
+          <div class="formula" id="formulaText"></div>
+        </div>
+
+        <div class="result-card">
+          <h3>Calculated result</h3>
+          <div class="result-value" id="mainResult">—</div>
+          <div class="formula" id="subResult">Fill the required values and press Calculate.</div>
+        </div>
+
+        <div class="result-card">
+          <h3>Quick outputs</h3>
+          <div class="formula" id="quickOutputs">SI, CI, amount, rate, time, and ROI will appear here when enough data is available.</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const modes = {
+      si: {
+        label: 'Simple Interest',
+        formula: 'SI = (P × R × T) / 100',
+        tip: 'Use this when interest is calculated only on the original principal.',
+        needsCompound: false,
+        compute: ({ principal, rate, time }) => ({
+          title: 'Simple Interest',
+          value: calcSI(principal, rate, time),
+          extra: `Amount = Principal + SI = ${formatCurrency(principal + calcSI(principal, rate, time))}`
+        })
+      },
+      ci: {
+        label: 'Compound Interest',
+        formula: 'CI = P × (1 + r/n)^(nt) − P',
+        tip: 'Use this when interest is added back to the principal every period.',
+        needsCompound: true,
+        compute: ({ principal, rate, time, compoundings }) => {
+          const amount = calcAmountCI(principal, rate, time, compoundings);
+          return {
+            title: 'Compound Interest',
+            value: amount - principal,
+            extra: `Total amount = ${formatCurrency(amount)}`
+          };
+        }
+      },
+      amount: {
+        label: 'Amount',
+        formula: 'A = P + SI  or  A = P × (1 + r/n)^(nt)',
+        tip: 'Find the final amount after interest. This mode uses simple interest when compounding is 1 and CI-style growth when compounding is above 1.',
+        needsCompound: true,
+        compute: ({ principal, rate, time, compoundings }) => {
+          const amount = compoundings === 1 ? principal + calcSI(principal, rate, time) : calcAmountCI(principal, rate, time, compoundings);
+          return {
+            title: 'Amount',
+            value: amount,
+            extra: `Interest earned = ${formatCurrency(amount - principal)}`
+          };
+        }
+      },
+      time: {
+        label: 'Time',
+        formula: 'T = (SI × 100) / (P × R)',
+        tip: 'This mode derives time in years using the simple interest relation.',
+        needsCompound: false,
+        compute: ({ principal, interest, rate }) => ({
+          title: 'Time',
+          value: (interest * 100) / (principal * rate),
+          extra: 'Time is shown in years.'
+        })
+      },
+      roi: {
+        label: 'ROI',
+        formula: 'ROI (%) = ((Final Value − Initial Investment) / Initial Investment) × 100',
+        tip: 'ROI compares gain with the original investment and shows total return in percent.',
+        needsCompound: false,
+        compute: ({ principal, amount }) => ({
+          title: 'ROI',
+          value: ((amount - principal) / principal) * 100,
+          extra: `Net gain = ${formatCurrency(amount - principal)}`
+        })
+      },
+      rate: {
+        label: 'Rate of Interest',
+        formula: 'R = (SI × 100) / (P × T)',
+        tip: 'This mode finds annual rate from principal, simple interest, and time.',
+        needsCompound: false,
+        compute: ({ principal, interest, time }) => ({
+          title: 'Rate of Interest',
+          value: (interest * 100) / (principal * time),
+          extra: 'Rate is shown as percent per year.'
+        })
+      }
+    };
+
+    const refs = {
+      principal: document.getElementById('principal'),
+      interest: document.getElementById('interest'),
+      amount: document.getElementById('amount'),
+      rate: document.getElementById('rate'),
+      time: document.getElementById('time'),
+      compoundings: document.getElementById('compoundings'),
+      compoundWrap: document.getElementById('compoundWrap'),
+      modeButtons: document.getElementById('modeButtons'),
+      modeLabel: document.getElementById('modeLabel'),
+      formulaText: document.getElementById('formulaText'),
+      mainResult: document.getElementById('mainResult'),
+      subResult: document.getElementById('subResult'),
+      quickOutputs: document.getElementById('quickOutputs'),
+      notice: document.getElementById('notice'),
+      tipBox: document.getElementById('tipBox'),
+      calculateBtn: document.getElementById('calculateBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      themeToggle: document.getElementById('themeToggle')
+    };
+
+    let currentMode = 'si';
+
+    function num(el) {
+      const value = parseFloat(el.value);
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-IN', {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 0
+      }).format(value);
+    }
+
+    function formatPercent(value) {
+      return `${value.toFixed(2)}%`;
+    }
+
+    function calcSI(P, R, T) {
+      return (P * R * T) / 100;
+    }
+
+    function calcAmountCI(P, R, T, n) {
+      const r = R / 100;
+      return P * Math.pow(1 + r / n, n * T);
+    }
+
+    function getValues() {
+      return {
+        principal: num(refs.principal),
+        interest: num(refs.interest),
+        amount: num(refs.amount),
+        rate: num(refs.rate),
+        time: num(refs.time),
+        compoundings: parseFloat(refs.compoundings.value)
+      };
+    }
+
+    function validate(modeKey, values) {
+      const requiredMap = {
+        si: ['principal', 'rate', 'time'],
+        ci: ['principal', 'rate', 'time', 'compoundings'],
+        amount: ['principal', 'rate', 'time', 'compoundings'],
+        time: ['principal', 'interest', 'rate'],
+        roi: ['principal', 'amount'],
+        rate: ['principal', 'interest', 'time']
+      };
+      const required = requiredMap[modeKey];
+      for (const key of required) {
+        if (!Number.isFinite(values[key])) return `Please enter a valid ${key}.`;
+        if (key !== 'rate' && values[key] <= 0) return `${key} must be greater than 0.`;
+      }
+      if ((modeKey === 'si' || modeKey === 'ci' || modeKey === 'amount') && values.rate < 0) return 'Rate cannot be negative.';
+      return '';
+    }
+
+    function renderModes() {
+      refs.modeButtons.innerHTML = '';
+      Object.entries(modes).forEach(([key, config]) => {
+        const btn = document.createElement('button');
+        btn.className = `mode-btn ${key === currentMode ? 'active' : ''}`;
+        btn.type = 'button';
+        btn.textContent = config.label;
+        btn.addEventListener('click', () => {
+          currentMode = key;
+          renderModes();
+          refreshMeta();
+          refs.notice.textContent = '';
+        });
+        refs.modeButtons.appendChild(btn);
+      });
+    }
+
+    function refreshMeta() {
+      const config = modes[currentMode];
+      refs.modeLabel.textContent = config.label;
+      refs.formulaText.textContent = config.formula;
+      refs.tipBox.textContent = config.tip;
+      refs.compoundWrap.style.display = config.needsCompound ? 'flex' : 'none';
+    }
+
+    function renderQuickOutputs(values) {
+      const outputs = [];
+      if (Number.isFinite(values.principal) && Number.isFinite(values.rate) && Number.isFinite(values.time)) {
+        const si = calcSI(values.principal, values.rate, values.time);
+        outputs.push(`Simple Interest: ${formatCurrency(si)}`);
+        outputs.push(`Simple Amount: ${formatCurrency(values.principal + si)}`);
+      }
+      if (Number.isFinite(values.principal) && Number.isFinite(values.rate) && Number.isFinite(values.time) && Number.isFinite(values.compoundings)) {
+        const ciAmount = calcAmountCI(values.principal, values.rate, values.time, values.compoundings);
+        outputs.push(`Compound Interest: ${formatCurrency(ciAmount - values.principal)}`);
+        outputs.push(`Compound Amount: ${formatCurrency(ciAmount)}`);
+      }
+      if (Number.isFinite(values.principal) && Number.isFinite(values.amount) && values.principal > 0) {
+        outputs.push(`ROI: ${formatPercent(((values.amount - values.principal) / values.principal) * 100)}`);
+      }
+      refs.quickOutputs.textContent = outputs.length ? outputs.join(' • ') : 'SI, CI, amount, rate, time, and ROI will appear here when enough data is available.';
+    }
+
+    function calculate() {
+      const values = getValues();
+      const error = validate(currentMode, values);
+      renderQuickOutputs(values);
+      if (error) {
+        refs.notice.textContent = error;
+        refs.mainResult.textContent = '—';
+        refs.subResult.textContent = 'Check your inputs and try again.';
+        return;
+      }
+
+      try {
+        const result = modes[currentMode].compute(values);
+        refs.notice.textContent = '';
+        refs.mainResult.textContent = currentMode === 'roi' || currentMode === 'rate'
+          ? formatPercent(result.value)
+          : currentMode === 'time'
+            ? `${result.value.toFixed(2)} years`
+            : formatCurrency(result.value);
+        refs.subResult.textContent = result.extra;
+      } catch {
+        refs.notice.textContent = 'Could not calculate with these values.';
+      }
+    }
+
+    function resetAll() {
+      document.querySelectorAll('input').forEach(input => input.value = '');
+      refs.compoundings.value = '12';
+      refs.mainResult.textContent = '—';
+      refs.subResult.textContent = 'Fill the required values and press Calculate.';
+      refs.quickOutputs.textContent = 'SI, CI, amount, rate, time, and ROI will appear here when enough data is available.';
+      refs.notice.textContent = '';
+    }
+
+    refs.calculateBtn.addEventListener('click', calculate);
+    refs.resetBtn.addEventListener('click', resetAll);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Enter') calculate();
+    });
+
+    let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    refs.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    refs.themeToggle.addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      refs.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    });
+
+    renderModes();
+    refreshMeta();
+  </script>
+</body>
+</html>
